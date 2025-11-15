@@ -1,0 +1,160 @@
+<div class="container">
+  <div class="form-card">
+    <h2>Add New Student</h2>
+
+    <div class="error" *ngIf="errorMessage">
+      {{ errorMessage }}
+    </div>
+
+    <form (ngSubmit)="onSubmit()" #studentForm="ngForm">
+      <div class="form-group">
+        <label for="firstName">First Name *</label>
+        <input 
+          type="text" 
+          id="firstName" 
+          name="firstName"
+          [(ngModel)]="student.firstName" 
+          required
+          #firstName="ngModel"
+          class="form-control"
+        />
+        <span class="field-error" *ngIf="fieldErrors['firstName']">
+          {{ fieldErrors['firstName'] }}
+        </span>
+        <span class="field-error" *ngIf="firstName.invalid && firstName.touched">
+          First name is required
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="lastName">Last Name *</label>
+        <input 
+          type="text" 
+          id="lastName" 
+          name="lastName"
+          [(ngModel)]="student.lastName" 
+          required
+          #lastName="ngModel"
+          class="form-control"
+        />
+        <span class="field-error" *ngIf="fieldErrors['lastName']">
+          {{ fieldErrors['lastName'] }}
+        </span>
+        <span class="field-error" *ngIf="lastName.invalid && lastName.touched">
+          Last name is required
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email *</label>
+        <input 
+          type="email" 
+          id="email" 
+          name="email"
+          [(ngModel)]="student.email" 
+          required
+          email
+          #email="ngModel"
+          class="form-control"
+        />
+        <span class="field-error" *ngIf="fieldErrors['email']">
+          {{ fieldErrors['email'] }}
+        </span>
+        <span class="field-error" *ngIf="email.invalid && email.touched">
+          Valid email is required
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="username">Username *</label>
+        <input 
+          type="text" 
+          id="username" 
+          name="username"
+          [(ngModel)]="student.username" 
+          required
+          #username="ngModel"
+          class="form-control"
+        />
+        <span class="field-error" *ngIf="fieldErrors['username']">
+          {{ fieldErrors['username'] }}
+        </span>
+        <span class="field-error" *ngIf="username.invalid && username.touched">
+          Username is required
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password *</label>
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showPassword ? 'text' : 'password'" 
+            id="password" 
+            name="password"
+            [(ngModel)]="student.password" 
+            required
+            minlength="6"
+            #password="ngModel"
+            class="form-control"
+          />
+          <button 
+            type="button" 
+            class="eye-button" 
+            (click)="togglePasswordVisibility()"
+            tabindex="-1"
+          >
+            <span *ngIf="!showPassword">👁️</span>
+            <span *ngIf="showPassword">👁️‍🗨️</span>
+          </button>
+        </div>
+        <span class="field-error" *ngIf="fieldErrors['password']">
+          {{ fieldErrors['password'] }}
+        </span>
+        <span class="field-error" *ngIf="password.invalid && password.touched">
+          Password must be at least 6 characters
+        </span>
+      </div>
+
+      <div class="form-group">
+        <label for="confirmPassword">Confirm Password *</label>
+        <div class="password-input-wrapper">
+          <input 
+            [type]="showConfirmPassword ? 'text' : 'password'" 
+            id="confirmPassword" 
+            name="confirmPassword"
+            [(ngModel)]="confirmPassword" 
+            required
+            minlength="6"
+            #confirmPasswordField="ngModel"
+            class="form-control"
+          />
+          <button 
+            type="button" 
+            class="eye-button" 
+            (click)="toggleConfirmPasswordVisibility()"
+            tabindex="-1"
+          >
+            <span *ngIf="!showConfirmPassword">👁️</span>
+            <span *ngIf="showConfirmPassword">👁️‍🗨️</span>
+          </button>
+        </div>
+        <span class="field-error" *ngIf="confirmPasswordField.touched && !passwordsMatch()">
+          Passwords do not match
+        </span>
+      </div>
+
+      <div class="form-actions">
+        <button 
+          type="submit" 
+          class="btn btn-primary" 
+          [disabled]="!studentForm.valid || !passwordsMatch()"
+        >
+          Create Student
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="cancel()">
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
