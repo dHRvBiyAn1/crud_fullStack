@@ -3,22 +3,44 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { Student } from '../../models/student';
 import { StudentService } from '../../service/student.service';
+import { PaginatedResponse, SortOption } from '../../models/pagination.model';
+import { FormsModule } from '@angular/forms';
+import { SearchPipe } from '../pipes/search.pipe';
 
 
 @Component({
   selector: 'app-student-list',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './student-list.html',
-  styleUrls: ['./student-list.css']
+  styleUrls: ['./student-list.css'],
+  providers: [SearchPipe]
 })
 export class StudentList implements OnInit {
-  students: Student[] = [];
+  allStudents: Student[] = [];
+  displayedStudents: Student[] = [];
   errorMessage: string = '';
+
+  // Pagination
+  currentPage: number = 0;
+  pageSize: number = 10;
+  totalElements: number = 0;
+  totalPages: number = 0;
+  isLastPage: boolean = false;
+  isFirstPage: boolean = true;
+  
+  // Search - Real-time with pipe
+  searchTerm: string = '';
+  
+  // Sorting
+  sortBy: string = 'createdAt';
+  sortOrder: string = 'desc';
+  sortableFields = ['createdAt', 'updatedAt', 'firstName', 'lastName', 'email', 'username'];
 
   constructor(
     private studentService: StudentService,
-    private router: Router
+    private router: Router,
+    private searchPipe: SearchPipe
   ) {}
 
   ngOnInit(): void {
@@ -26,14 +48,71 @@ export class StudentList implements OnInit {
   }
 
   loadStudents(): void {
-    this.studentService.getAllStudents().subscribe({
-      next: (data) => {
-        this.students = data;
+    this.getStudentsWithPagination();
+  }
+
+  getStudentsWithPagination(): void {
+    this.studentService.getStudentsWithPagination(
+      this.currentPage,
+      this.pageSize,
+      this.sortBy,
+      this.sortOrder
+    ).subscribe({
+      next: (data: PaginatedResponse<Student>) => {
+        this.allStudents = data.content;
+        this.updateDisplayedStudents();
+        this.currentPage = data.pageNumber;
+        this.totalElements = data.totalElements;
+        this.totalPages = data.totalPages;
+        this.isLastPage = data.isLastPage;
+        this.isFirstPage = data.isFirstPage;
+        this.errorMessage = '';
       },
       error: (error) => {
         this.errorMessage = error.message || 'Failed to load students';
       }
     });
+  }
+
+  updateDisplayedStudents(): void {
+    this.displayedStudents = this.searchPipe.transform(this.allStudents, this.searchTerm);
+  }
+
+  onSearchChange(): void {
+    this.currentPage = 0;
+    this.updateDisplayedStudents();
+  }
+
+  onHeaderClick(field: string): void {
+    if (this.sortableFields.includes(field)) {
+      if (this.sortBy === field) {
+        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+      } else {
+        this.sortBy = field;
+        this.sortOrder = 'desc';
+      }
+      this.currentPage = 0;
+      this.loadStudents();
+    }
+  }
+
+  getSortIndicator(field: string): string {
+    if (this.sortBy !== field) return '';
+    return this.sortOrder === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  goToPreviousPage(): void {
+    if (this.currentPage > 0) {
+      this.currentPage--;
+      this.loadStudents();
+    }
+  }
+
+  goToNextPage(): void {
+    if (this.currentPage < this.totalPages - 1) {
+      this.currentPage++;
+      this.loadStudents();
+    }
   }
 
   deleteStudent(id: number | undefined): void {
@@ -58,5 +137,18 @@ export class StudentList implements OnInit {
 
   addStudent(): void {
     this.router.navigate(['/add']);
+  }
+
+   getStartIndex(): number {
+    return this.currentPage * this.pageSize + 1;
+  }
+
+  getEndIndex(): number {
+    const endIndex = (this.currentPage + 1) * this.pageSize;
+    return Math.min(endIndex, this.getTotalDisplayed());
+  }
+
+  getTotalDisplayed(): number {
+    return this.displayedStudents.length;
   }
 }

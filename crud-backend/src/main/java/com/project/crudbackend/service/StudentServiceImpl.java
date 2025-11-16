@@ -7,6 +7,10 @@ import com.project.crudbackend.exception.StudentNotFoundException;
 import com.project.crudbackend.exception.UsernameAlreadyExistsException;
 import com.project.crudbackend.repository.StudentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +33,24 @@ public class StudentServiceImpl implements StudentService {
         return studentRepository.findAll().stream()
                 .map(this::toStudentResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Page<StudentResponse> getStudentsWithPagination(int page, int size, String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.fromString(sortOrder.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        return studentRepository.findAll(pageable)
+                .map(this::toStudentResponse);
+    }
+
+    @Override
+    public Page<StudentResponse> searchStudents(String searchTerm, int page, int size, String sortBy, String sortOrder) {
+        Sort.Direction direction = Sort.Direction.fromString(sortOrder.toUpperCase());
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+
+        return studentRepository.searchStudents(searchTerm, pageable)
+                .map(this::toStudentResponse);
     }
 
     @Override
