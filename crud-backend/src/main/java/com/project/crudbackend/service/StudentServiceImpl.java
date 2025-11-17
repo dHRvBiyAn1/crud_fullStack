@@ -93,6 +93,7 @@ public class StudentServiceImpl implements StudentService {
         existingStudent.setLastName(request.getLastName());
         existingStudent.setEmail(request.getEmail());
         existingStudent.setUsername(request.getUsername());
+        existingStudent.setPassword(bCryptPasswordEncoder.encode(request.getPassword()));
 
         Student updatedStudent = studentRepository.save(existingStudent);
 

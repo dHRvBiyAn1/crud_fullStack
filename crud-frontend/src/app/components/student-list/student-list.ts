@@ -5,7 +5,8 @@ import { Student } from '../../models/student';
 import { StudentService } from '../../service/student.service';
 import { PaginatedResponse, SortOption } from '../../models/pagination.model';
 import { FormsModule } from '@angular/forms';
-import { SearchPipe } from '../pipes/search.pipe';
+import { SearchPipe } from '../../pipes/search.pipe';
+import { ToastrService } from 'ngx-toastr';
 
 
 @Component({
@@ -20,6 +21,7 @@ export class StudentList implements OnInit {
   allStudents: Student[] = [];
   displayedStudents: Student[] = [];
   errorMessage: string = '';
+  
 
   // Pagination
   currentPage: number = 0;
@@ -36,17 +38,22 @@ export class StudentList implements OnInit {
   sortBy: string = 'createdAt';
   sortOrder: string = 'desc';
   sortableFields = ['createdAt', 'updatedAt', 'firstName', 'lastName', 'email', 'username'];
+  isLoading$: any;
 
   constructor(
     private studentService: StudentService,
     private router: Router,
-    private searchPipe: SearchPipe
-  ) {}
+    private searchPipe: SearchPipe,
+    private toastr: ToastrService
+  ) {
+    this.isLoading$ = this.studentService.loading$;
+  }
 
+  
   ngOnInit(): void {
     this.loadStudents();
   }
-
+  
   loadStudents(): void {
     this.getStudentsWithPagination();
   }
@@ -69,7 +76,7 @@ export class StudentList implements OnInit {
         this.errorMessage = '';
       },
       error: (error) => {
-        this.errorMessage = error.message || 'Failed to load students';
+        this.toastr.error(error.message || 'Failed to load students', 'Error');
       }
     });
   }
@@ -120,10 +127,11 @@ export class StudentList implements OnInit {
     if (confirm('Are you sure you want to delete this student?')) {
       this.studentService.deleteStudent(id).subscribe({
         next: () => {
+          this.toastr.success('Student deleted successfully', 'Success');
           this.loadStudents();
         },
         error: (error) => {
-          this.errorMessage = error.message || 'Failed to delete student';
+          this.toastr.error(error.message || 'Failed to delete student', 'Error');
         }
       });
     }

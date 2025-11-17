@@ -4,8 +4,8 @@ import {
   HttpErrorResponse,
   HttpParams,
 } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import { ErrorResponse } from '../models/errorResponse';
 import { Student, StudentRequest } from '../models/student';
 import { PaginatedResponse } from '../models/pagination.model';
@@ -15,19 +15,29 @@ import { PaginatedResponse } from '../models/pagination.model';
 })
 export class StudentService {
   private apiUrl = 'http://localhost:8080/student';
+  private loadingSubject = new BehaviorSubject<boolean>(false);
+  public loading$ = this.loadingSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
+  private setLoading(loading: boolean): void {
+    this.loadingSubject.next(loading);
+  }
+
   getAllStudents(): Observable<Student[]> {
-    return this.http
-      .get<Student[]>(this.apiUrl)
-      .pipe(catchError(this.handleError));
+    this.setLoading(true);
+    return this.http.get<Student[]>(this.apiUrl).pipe(
+      finalize(() => this.setLoading(false)),
+      catchError(this.handleError)
+    );
   }
 
   getStudentById(id: number): Observable<Student> {
-    return this.http
-      .get<Student>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(this.handleError));
+    this.setLoading(true);
+    return this.http.get<Student>(`${this.apiUrl}/${id}`).pipe(
+      finalize(() => this.setLoading(false)),
+      catchError(this.handleError)
+    );
   }
 
   getStudentsWithPagination(
@@ -41,10 +51,13 @@ export class StudentService {
       .set('size', size.toString())
       .set('sortBy', sortBy)
       .set('sortOrder', sortOrder);
-
+    this.setLoading(true);
     return this.http
       .get<PaginatedResponse<Student>>(`${this.apiUrl}/paginated`, { params })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        finalize(() => this.setLoading(false)),
+        catchError(this.handleError)
+      );
   }
 
   searchStudents(
@@ -61,27 +74,37 @@ export class StudentService {
       .set('sortBy', sortBy)
       .set('sortOrder', sortOrder);
 
+    this.setLoading(true);
     return this.http
       .get<PaginatedResponse<Student>>(`${this.apiUrl}/search`, { params })
-      .pipe(catchError(this.handleError));
+      .pipe(
+        finalize(() => this.setLoading(false)),
+        catchError(this.handleError)
+      );
   }
 
   createStudent(student: StudentRequest): Observable<Student> {
-    return this.http
-      .post<Student>(this.apiUrl, student)
-      .pipe(catchError(this.handleError));
+    this.setLoading(true);
+    return this.http.post<Student>(this.apiUrl, student).pipe(
+      finalize(() => this.setLoading(false)),
+      catchError(this.handleError)
+    );
   }
 
   updateStudent(id: number, student: StudentRequest): Observable<Student> {
-    return this.http
-      .put<Student>(`${this.apiUrl}/${id}`, student)
-      .pipe(catchError(this.handleError));
+    this.setLoading(true);
+    return this.http.put<Student>(`${this.apiUrl}/${id}`, student).pipe(
+      finalize(() => this.setLoading(false)),
+      catchError(this.handleError)
+    );
   }
 
   deleteStudent(id: number): Observable<void> {
-    return this.http
-      .delete<void>(`${this.apiUrl}/${id}`)
-      .pipe(catchError(this.handleError));
+    this.setLoading(true);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      finalize(() => this.setLoading(false)),
+      catchError(this.handleError)
+    );
   }
 
   private handleError(error: HttpErrorResponse) {
